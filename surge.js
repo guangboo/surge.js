@@ -3,204 +3,125 @@
 // Licensed under the MIT license.
 
 (function(global) {
-    var surge = function() { };
+    var surge = global.surge = { };
     
     surge.version = '0.1 dev';
     surge.author = 'Theo <guangboo49@gmail.com>';
-    suge.debug = false;
-    
-    var nonSpaceRegex = /\S/;
-    
-    function isWhiteSpace(str) {
-        return !str.test(nonSpaceRegex);
-    }
-    
-    function Scanner(source) {
-        this.source = source;
-        this.position = 0;
-        this.length = source.length;
-    }
-        
-    Scanner.prototype.eos = function() { return this.position >= this.length; }
-
-    Scanner.prototype.skipWhiteSpace = function() {
-        if(this.position >= this.length) return;
-        var c = this.source.charAt(this.position);
-        
-        while(this.position < this.length && isWhiteSpace(c)) {
-            this.position += 1;
-            c = this.source.charAt(this.position);
-        }
-    }
-
-    Scanner.prototype.pop = function() { return this.source.charAt(this.position++); }
-    Scanner.prototype.back = function(count) {
-        if(arguments.length == 0) {
-            this.position -= 1;
-        }else{
-            this.position -= count;
-        }
-    }
-
-    Scanner.prototype.skipTo = function(to) {
-        var substr = this.source.substring(this.position);
-        var len = to.length,
-            indx = substr.indexOf(to);
-        
-        if(indx > -1) {
-            this.pos += indx + len;
-            return this.pos;
-        } else {
-            this.pos = this.length;
-            return -1;
-        }
-    }
-
-    Scanner.prototype.copy = function(from, to) {
-        return this.source.substring(from, to);
-    }
-
-    Scanner.prototype.readWord = function(){
-        var p = this.position;
-        var c = this.source.charAt(this.position++);
-        
-        while(!this.eos() && !isWhiteSpace(c))
-            c = this.source.charAt(this.position++);
-        return this.source.substring(p, this.position - 1);
-    }
-    
-    var _compiler = function(){
-        var tag_regex = /([^|:=><\s]+)\s*(?:\s*\|\s*(\w+)(?:\s*\:\s*([\w\.\s'",]+)+)?)?/g;
-        var for_regex = /(\w+)\s*in\s*([^|:=><\s]+)\s*(?:\s*\|\s*(\w+)(?:\s*\:\s*([\w\.\s'",]+)+)?)?/;
-        var with_regex = /((?:\w+)\s*=\s*(?:[\w\.]+))+/g;
-        
-        var FILTER_SEPARATOR               = '|',
-            FILTER_ARGUMENT_SEPARATOR      = ':',
-            VARIABLE_ATTRIBUTE_SEPARATOR   = '.',
-            BLOCK_TAG_START                = '{%',
-            BLOCK_TAG_END                  = '%}',
-            VARIABLE_TAG_START             = '{{',
-            VARIABLE_TAG_END               = '}}',
-            COMMENT_TAG_START              = '{#',
-            COMMENT_TAG_END                = '#}';
-        var _cache = {};
-        
-        var get = function(id){
-            var tmplt;
-            if(_cache.hasOwnProperty(id)) {
-                tmplt = _cache[id];
-            } else if('document' in global) {
-                var ele = document.getElementById(id);
-                if(ele) {
-                    var src = ele.value || ele.innerHTML;
-                    tmplt = compile(src.replace(/^\s*|\s*$/g, ''));
-                    _cache[id] = tmplt;
-                }
-            }
-            return tmplt;
-        };
-        
-        var compile = function(source) {
-            var scanner = new Scanner(source);
-            scanner.skipWhiteSpace();
-            var c, c2, c3;
-            var pos, pos2;
-            var codes = [];
-            var html_regs = [];
-            codes.push('var _html = [];');
-            var var_index = 1;
-            var var_name;
-            
-            while(!scanner.eos()){
-                pos = scanner.position;
-                c = scanner.pop();
-                switch(c) {
-                    case '{':
-                        if(!scanner.eos()) {
-                            if(pos > pos2) {
-                                codes.push('_html.push("' + scanner.copy(pos2, pos) + '");');
-                            }
-                            pos2 = scanner.position;
-                            c2 = scanner.pop();
-                            if (c2 === '{') {
-                                c3 = scanner.pop();
-                                if(c3 != '{') {
-                                    pos2 = scanner.skipTo('}}');
-                                    if(pos2 != -1) {
-                                        var token = scanner.copy(pos + 2, pos2 - 2);
-                                        var v = token.replace(tag_regex, '$2($1,$3)').replace(/\,\s*\)/g, ')');
-                                        codes.push('_html.push(' + v + ');');
-                                    } else {
-                                        throw 'Syntax Error, "}}" is required.';
-                                    }
-                                }
-                            } else if(c2 === '%') {
-                                scanner.skipWhiteSpace();
-                                var word = scanner.readWord();
-                                scanner.skipWhiteSpace();
-                                pos = scanner.skipWhiteSpace();
-                                
-                                pos3 = scanner.skipTo('%}');
-                                if(pos3 > -1) {
-                                    var token = scanner.copy(pos + 2, pos3);
-                                    if(word == 'if' || word == 'elif'){
-                                        var parts = toekn.split(/\s*(and|or|\(|\))\s*/g);
-                                        var cs = [];
-                                        for(var i = 0; i < parts.length; i++){
-                                            var p = parts[i];
-                                            if(!(p in ['and', 'or', '(', ')', ''])) {
-                                                cs.push('(' + token.replace(tag_regex, '$2($1,$3)').replace(/\,\s*\)/g, ')') + ')');
-                                            } else if(p == 'and'){
-                                                cs.push('&&');
-                                            } else if(p == 'or'){
-                                                cs.push('||');
-                                            } else {
-                                                cs.push(p);
-                                            }
-                                        }
-                                        if(word == 'if') {
-                                            codes.push('if(' + cs.join() + '){');
-                                        }else{
-                                            codes.push('} else if(' + cs.join() + '){');
-                                        }
-                                    } else if(word == 'else'){
-                                        codes.push('} else {');
-                                    } else if(word in ['endfor', 'endif', 'endwith']){
-                                        codes.push('}');
-                                    } else if(word == 'for'){
-                                        var_name = '$var_' + (var_index++);
-                                        codes.push(token.replace(for_regex, 'var ' + var_name + '=$3($2,$4);for(var i=0;i<' + var_name + '.length;i++){var $1='+var_name+'[i];'));
-                                    } else if(word == 'with'){
-                                        var parts = token.match(with_regex);
-                                        codes.push('{');
-                                        for(var i = 0; i < parts.length; i++){
-                                            codes.push('var ' + parts[i] + ';');
-                                        }
-                                    }
-                                }
-                            } else if(c2 === '#') {
-                                scanner.skipTo('#}');
-                            }
-                        }
-                        break;
-                }
-            }
-            return {
-                render : function(context) {
-                    
-                }
-            };
-        };
-    };
+    surge.debug = false;
+    surge.__builtins = {};
     
     surge.compile = _compiler.compile;
     surge.get_template = _compiler.get;
     
-    var _builtin = function() { 
-        var blocks = {}, filters = [];
-        blocks['if'] = function(token) {
-            
-        };
+    surge.register = function(name, func){ this.__builtins[name] = func; return this;};
+    var escapeMap = {
+        '<' : '&lt;',
+        '>' : '&gt;',
+        '"' : '&#39;',
+        "'" : '&quot;',
+        '&' : '&amp;'
     };
+    
+    surge.register('trim', function(a) { 
+            if (typeof a == 'string')
+                a.replace(/^\s+|\s+$/g, '');
+            return a; 
+        }).register('ltrim', function(a) { 
+            if (typeof a == 'string') 
+                return a.replace(/^\s+/, ''); 
+            return a; 
+        }).register('rtrim', function(a) {
+            if(typeof a == 'string')
+                return a.replace(/\s+$/, '');
+            return a;
+        }).register('add', function(a) {
+            if(typeof a == 'number' && arguments.length > 1){
+                var sum = a;
+                for(var i = 1; i < arguments.length; i++){
+                    sum += parseFloat(arguments[i]);
+                }
+                return sum;
+            }
+            return a;
+        }).register('addslashes', function(a) {
+            if(typeof a == 'string')
+                return a.replace(/(\'|\")/g, '\\$1');
+            return a;
+        }).register('capfirst', function(a) {
+            if(typeof a == 'string')
+                return a.replace(/^([a-z])/, function(m) { return m.toUpperCase(); });
+            return a;
+        }).register('cut', function(a, cc) {
+            if(typeof a == 'string') {
+                if(!!cc) {
+                    return a.replace(new RegExp(cc, 'g'), '');
+                }
+            }
+            return a;
+        }).register('default', function(a, v){
+            if(!!a && (!(a instanceof Array) || a.length > 0)) return a;
+            else return v;
+        }).register('sort', function(a, v){
+            if(a instanceof Array && a.length > 0) {
+                if(typeof v == 'undefined'){
+                    if(typeof a[0] == 'string') {
+                        return a.sort();
+                    } else if(typeof a[0] == 'number' || typeof a[0] == 'boolean'){
+                        return a.sort(function(a, b) { return a - b; });
+                    } else {
+                        for(var p in a[0]) { v = p; break; }
+                        if(typeof v == 'undefined')
+                            return a;
+                    }
+                }
+                
+                if(a[0].hasOwnProperty(v)) {
+                    var by = function(name){
+                        return function(o, p){
+                            var a1, b;
+                            if (typeof o === "object" && typeof p === "object" && o && p) {
+                                a1 = o[name];
+                                b = p[name];
+                                if (a1 === b) {
+                                    return 0;
+                                }
+                                if (typeof a1 === typeof b) {
+                                    return a1 < b ? -1 : 1;
+                                }
+                                return typeof a1 < typeof b ? -1 : 1;
+                            }
+                            else {
+                                throw ("error");
+                            }
+                        }
+                    };
+                    return a.sort(by(v));
+                }
+            }
+            return a;
+        }).register('reverse', function(a, v){
+            return surge.__builtins.sort(a, v).reverse();
+        }).register('escape', function(a){
+            return a.replace(/[<>'"]|&(?!amp;)/g, function(m){return escapeMap[m];});
+        }).register('length', function(a){
+            if(typeof a === 'string' || a instanceof Array) 
+                return a.length;
+            return a;
+        }).register('lower', function(a){
+            if(typeof a === 'string') return a.toLowerCase();
+            return a;
+        }).register('upper', function(a){
+            if(typeof a === 'string') return a.toUpperCase();
+            return a;
+        }).register('striptags', function(a){
+            if(typeof a === 'string')
+                return a.replace(/<(?:.|\s)*?>/g, '');
+            return a;
+        }).register('title', function(a){
+            if(typeof a === 'string')
+                return a.replace(/^(?:\w([^\S]*)\s+)|(?:\s+\w([^\S]*))/g, function(m){ return m.toLowerCase(); })
+                        .replace(/^(?:(\w)[^\S]*\s+)|(?:\s+(\w)[^\S]*)/g, function(m){ return m.toUpperCase(); });
+            return a;
+        });
     
 })(this);
