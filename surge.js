@@ -1,15 +1,18 @@
 // surge.js
-// 2013, Theo, https://github.com/guangboo/surge.js
+// 2013, Theo <guangboo49@gmail.com>, https://github.com/guangboo/surge.js
 // Licensed under the MIT license.
 (function(global) {
     var surge = global.surge = { };
     
-    surge.version = '0.2.1 dev';
-    surge.author = 'Theo <guangboo49@gmail.com>';
-    surge.debug = false;
-    surge.__builtins = {};
+    surge.version = '0.2.2 Alpha';
+    surge.debug = true;
+    var _ = surge.__builtins = {};
     
-    surge.register = function(name, func){ this.__builtins[name] = func; return this;};
+    surge.register = function(name, func){ if(/^[_a-zA-Z]\w*/.test(name)) { this.__builtins[name] = func; return this; } throw '"' + name + '" is not valid filter name.'; };
+    
+    var regex_trim = /^\s+|\s+$/g,
+        regex_for = /(\w+)\s+in\s+(.*)/,
+        regex_with = /((?:\w+)\s*=\s*(?:[\w\.]+))+/g;
     
     var escapeMap = {
         '<' : '&lt;',
@@ -19,20 +22,26 @@
         '&' : '&amp;'
     };
     
+    if(!String.prototype.hasOwnProperty('trim'))
+        String.prototype.trim = function(){ return this.replace(regex_trim, ''); };
+    
+    function is_true(a) { return !!a && (!(a instanceof Array) || a.length > 0); }
+    surge.is_true = is_true;
+    
     surge.register('trim', function(a) { 
-        if (typeof a == 'string')
-            a.replace(/^\s+|\s+$/g, '');
-        return a; 
+        if (typeof a === 'string')
+            return a.trim();
+        return a;
     }).register('ltrim', function(a) { 
-        if (typeof a == 'string') 
+        if (typeof a === 'string') 
             return a.replace(/^\s+/, ''); 
         return a; 
     }).register('rtrim', function(a) {
-        if(typeof a == 'string')
+        if(typeof a === 'string')
             return a.replace(/\s+$/, '');
         return a;
     }).register('add', function(a) {
-        if(typeof a == 'number' && arguments.length > 1){
+        if(typeof a === 'number' && arguments.length > 1){
             var sum = a;
             for(var i = 1; i < arguments.length; i++){
                 sum += parseFloat(arguments[i]);
@@ -41,33 +50,33 @@
         }
         return a;
     }).register('addslashes', function(a) {
-        if(typeof a == 'string')
+        if(typeof a === 'string')
             return a.replace(/(\'|\")/g, '\\$1');
         return a;
     }).register('capfirst', function(a) {
-        if(typeof a == 'string')
+        if(typeof a === 'string')
             return a.replace(/^([a-z])/, function(m) { return m.toUpperCase(); });
         return a;
     }).register('cut', function(a, cc) {
-        if(typeof a == 'string') {
+        if(typeof a === 'string') {
             if(!!cc) {
                 return a.replace(new RegExp(cc, 'g'), '');
             }
         }
         return a;
     }).register('default', function(a, v){
-        if(!!a && (!(a instanceof Array) || a.length > 0)) return a;
+        if(is_true(a)) return a;
         else return v;
     }).register('sort', function(a, v){
         if(a instanceof Array && a.length > 0) {
-            if(typeof v == 'undefined'){
-                if(typeof a[0] == 'string') {
+            if(typeof v === 'undefined'){
+                if(typeof a[0] === 'string') {
                     return a.sort();
-                } else if(typeof a[0] == 'number' || typeof a[0] == 'boolean'){
+                } else if(typeof a[0] === 'number' || typeof a[0] === 'boolean'){
                     return a.sort(function(a, b) { return a - b; });
                 } else {
                     for(var p in a[0]) { v = p; break; }
-                    if(typeof v == 'undefined')
+                    if(typeof v === 'undefined')
                         return a;
                 }
             }
@@ -123,10 +132,10 @@
     
     function isWhiteSpace(str) { return !/\S/.test(str); }
 
-    function Scanner(source) {
-        this.source = source;
+    function Scanner(src) {
+        this.source = src;
         this.position = 0;
-        this.length = source.length;
+        this.length = src.length;
     }
     
     Scanner.prototype.eos = function() { return this.position >= this.length; }
@@ -176,14 +185,11 @@
             c = this.source.charAt(this.position++);
         return this.source.substring(p, this.position - 1);
     }
-
+    
     var _cache = {};
-
+    var space_map = {9:'\\t',13:'\\r',10:'\\n'};
+    
     var _compiler = {
-        tag_regex : /([^|:=><\s]+)\s*(?:\s*\|\s*(\w+)(?:\s*\:\s*([\w\.\s'",]+)+)?)?/g,
-        for_regex : /(\w+)\s*in\s*([^|:=><\s]+)\s*(?:\s*\|\s*(\w+)(?:\s*\:\s*([\w\.\s'",]+)+)?)?/,
-        with_regex : /((?:\w+)\s*=\s*(?:[\w\.]+))+/g,
-
         get : function(id){
             var tmplt;
             if(_cache.hasOwnProperty(id)) {
@@ -192,11 +198,27 @@
                 var ele = document.getElementById(id);
                 if(ele) {
                     var src = ele.value || ele.innerHTML;
-                    tmplt = compile(src.replace(/^\s*|\s*$/g, ''));
+                    tmplt = _compiler.compile(src.trim());
                     _cache[id] = tmplt;
                 }
             }
             return tmplt;
+        },
+        
+        parse_filter:function(src) {
+            var fi = src.lastIndexOf('|');
+            if(fi > 0) {
+                var p1 = src.substr(0, fi);
+                var p2 = src.substr(fi + 1);
+                var val = _compiler.parse_filter(p1);
+                var fa = p2.split(':');
+                var f = "_." + fa[0].trim();
+                if(fa.length > 1)
+                    return f + '(' + val + ',' + fa[1].trim() + ')';
+                return f + '(' + val + ')';
+            } else {
+                return src.trim();
+            }
         },
         
         compile : function(source) {
@@ -210,6 +232,7 @@
             var var_index = 1;
             var var_name;
             var tag_stack = [], if_nested_stack = [], if_tags = [], if_tag_deep = 0;
+            
             pos2 = scanner.position;
             
             while(!scanner.eos()){
@@ -219,7 +242,7 @@
                     case '{':
                         if(!scanner.eos()) {
                             if(pos > pos2) {
-                                codes.push('_html.push("' + scanner.copy(pos2, pos).replace(/("|')/g, '\\$1') + '");');
+                                codes.push('_html.push("' + scanner.copy(pos2, pos).replace(/("|')/g, '\\$1').replace(/(\t|\r|\n)/g, function(m){ return space_map[m.charCodeAt()]; }) + '");');
                             }
                             pos2 = scanner.position;
                             c2 = scanner.pop();
@@ -229,8 +252,8 @@
                                     pos = scanner.position;
                                     pos2 = scanner.skipTo('}}');
                                     if(pos2 != -1) {
-                                        var token = scanner.copy(pos, pos2 - 2);
-                                        var v = token.replace(this.tag_regex, '$2($1,$3)').replace(/\,\s*\)/g, ')');
+                                        var token = scanner.copy(pos - 1, pos2 - 2).trim();
+                                        var v = _compiler.parse_filter(token);
                                         codes.push('try { _html.push(' + v + '); } catch(e){}');
                                     } else {
                                         throw 'Syntax Error, "}}" is required.';
@@ -244,18 +267,17 @@
                                 
                                 pos2 = scanner.skipTo('%}');
                                 if(pos2 > -1) {
-                                    var token = scanner.copy(pos, pos2 - 2);
+                                    var token = scanner.copy(pos, pos2 - 2).trim();
                                     if(word == 'if' || word == 'elif'){
                                         var parts = token.split(/\s*(and|or|\(|\))\s*/g);
                                         var cs = [];
-                                        //var_name = '$var_' + (var_index++);
                                         for(var i = 0; i < parts.length; i++){
                                             var p = parts[i];
                                             if(!(/and|or|\(|\)/.test(p))){
-                                                var v = token.replace(this.tag_regex, '$2($1,$3)').replace(/\,\s*\)/g, ')');
+                                                var v = _compiler.parse_filter(token);
                                                 if (/^\([\w\.]+\)$/.test(v)){
                                                     v = v.replace(/^\(|\)$/g, '');
-                                                    v = '(!!' + v + ' && (!(' + v + ' instanceof Array) || ' + v + '.length > 0))';
+                                                    v = 'surge.is_true(' + v + ')';
                                                 }
                                                 cs.push(v);
                                             } else if(p == 'and'){
@@ -284,10 +306,18 @@
                                     } else if(word == 'for'){
                                         tag_stack.push('for');
                                         var_name = '$var_' + (var_index++);
-                                        codes.push(token.replace(this.for_regex, 'var ' + var_name + '=$3($2,$4);for(var i=0;i<' + var_name + '.length;i++){var $1='+var_name+'[i];').replace(/\,\s*\)/g, ')'));
+                                        
+                                        if(regex_for.test(token)) {
+                                            var v = _compiler.parse_filter(RegExp.$2);
+                                            var stmpt = 'var ' + var_name + '=' + v + ';';
+                                            stmpt += 'for(var i=0;i<' + var_name + '.length;i++){var '+ RegExp.$1 + '='+var_name+'[i];';
+                                            codes.push(stmpt);
+                                        } else {
+                                            throw 'Syntax error for "for" expression.';
+                                        }
                                     } else if(word == 'with'){
                                         tag_stack.push('with');
-                                        var parts = token.match(this.with_regex);
+                                        var parts = token.match(regex_with);
                                         codes.push('{');
                                         for(var i = 0; i < parts.length; i++){
                                             codes.push('var ' + parts[i] + ';');
