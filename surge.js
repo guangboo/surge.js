@@ -4,7 +4,7 @@
 (function(global) {
     var surge = global.surge = { };
     
-    surge.version = '0.2.2 Alpha';
+    surge.version = '0.2.1 Alpha';
     surge.debug = true;
     var _ = surge.__builtins = {};
     
@@ -128,6 +128,13 @@
             return a.replace(/\B(\w*)/g, function(m){ return m.toLowerCase(); })
                     .replace(/\b(\w)|\b(\w)/g, function(m){ return m.toUpperCase(); });
         return a;
+    }).register('truncate', function(a, i){
+        if(typeof a === 'string') {
+            if(a.length > i)
+                return a.substring(0, i - 3) + '...';
+            return a;
+        }
+        return a;
     });
     
     function isWhiteSpace(str) { return !/\S/.test(str); }
@@ -188,7 +195,9 @@
     
     var _cache = {};
     var space_map = {9:'\\t',13:'\\r',10:'\\n'};
-    
+    function escap_str(token){
+        return token.replace(/("|')/g, '\\$1').replace(/(\t|\r|\n)/g, function(m){ return space_map[m.charCodeAt()]; });
+    }
     var _compiler = {
         get : function(id){
             var tmplt;
@@ -242,7 +251,7 @@
                     case '{':
                         if(!scanner.eos()) {
                             if(pos > pos2) {
-                                codes.push('_html.push("' + scanner.copy(pos2, pos).replace(/("|')/g, '\\$1').replace(/(\t|\r|\n)/g, function(m){ return space_map[m.charCodeAt()]; }) + '");');
+                                codes.push('_html.push("' + escap_str(scanner.copy(pos2, pos)) + '");');
                             }
                             pos2 = scanner.position;
                             c2 = scanner.pop();
@@ -263,7 +272,7 @@
                                 scanner.skipWhiteSpace();
                                 var word = scanner.readWord();
                                 scanner.skipWhiteSpace();
-                                pos = scanner.position
+                                pos = scanner.position;
                                 
                                 pos2 = scanner.skipTo('%}');
                                 if(pos2 > -1) {
@@ -323,14 +332,14 @@
                             } else if(c2 === '#') {
                                 pos2 = scanner.skipTo('#}');
                             } else {
-                                codes.push('_html.push("' + scanner.copy(pos, pos2).replace(/("|')/g, '\\$1') + '");');
+                                codes.push('_html.push("' + escap_str(scanner.copy(pos, pos2)) + '");');
                             }
                         }
                         break;
                 }
             }
             if(pos > pos2) {
-                codes.push('_html.push("' + scanner.copy(pos2, pos + 1).replace(/("|')/g, '\\$1') + '");');
+                codes.push('_html.push("' + escap_str(scanner.copy(pos2, pos + 1)) + '");');
             }
             
             if(tag_stack.length > 0){
@@ -343,5 +352,6 @@
     };
     
     surge.compile = _compiler.compile;
+    //surge.parse_filter = _compiler.parse_filter;
     surge.get_template = _compiler.get;
 })(this);
