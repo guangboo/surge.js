@@ -275,11 +275,7 @@
                                             var p = parts[i];
                                             if(!(/and|or|\(|\)/.test(p))){
                                                 var v = _compiler.parse_filter(token);
-                                                if (/^\([\w\.]+\)$/.test(v)){
-                                                    v = v.replace(/^\(|\)$/g, '');
-                                                    v = 'surge.is_true(' + v + ')';
-                                                }
-                                                cs.push(v);
+                                                cs.push('is_true(' + v + ')');
                                             } else if(p == 'and'){
                                                 cs.push('&&');
                                             } else if(p == 'or'){
