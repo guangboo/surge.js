@@ -49,10 +49,6 @@
             return sum;
         }
         return a;
-    }).register('addslashes', function(a) {
-        if(typeof a === 'string')
-            return a.replace(/(\'|\")/g, '\\$1');
-        return a;
     }).register('capfirst', function(a) {
         if(typeof a === 'string')
             return a.replace(/^([a-z])/, function(m) { return m.toUpperCase(); });

@@ -5,15 +5,23 @@
 <title>Filters - Tutorial Surge.js</title>
 <script src="../surge.js"></script>
 <style>
-body{padding:0;margin:0;font:100% 'Arial'}
+body{padding:0;margin:0;font:12px 'Arial';background:#234F32}
 header, section, article, footer{display:block;text-align:left}
-.page{width:900px;margin:auto}
+.page{width:940px;margin:auto;background:#fff;padding:20px}
+h1,h2,h3,h4,h5{line-height:1em;margin:1em 0em}
 h1.title{display:block;text-align:center}
+h1{font-size:200%}
+h2{font-size:180%}
+h3{font-size:160%}
+h4{font-size:140%}
+h5{font-size:120%}
+p{line-height:1.5em}
 .clear-left{clear:left;height:0px}
 header.header{background:#333;color:#fff;padding:10px 20px}
-pre{padding:5px;margin:0;display:block;background:#eee;line-height:1.2em;border-left:5px solid #ccc;overflow-x:auto}
+pre{padding:8px;margin:0;display:block;background:#E0FFB8;line-height:1.2em;border-top:1px solid #94DA3A;border-bottom:1px solid #94DA3A;overflow-x:auto}
+code{color:#234F32;}
 .result{background:#eee}
-.notice{padding:6px;background:#fcc}
+.notice{padding:15px;background:#fcc;border-top:1px solid #c99;border-bottom:1px solid #c99}
 footer{margin:20px 0px}
 </style>
 </head>
@@ -30,12 +38,38 @@ footer{margin:20px 0px}
                     <li>
                         <a href="#syntax">Syntax</a>
                         <ul>
-                            <li><a href="#syntax-variable">Variable</a></li>
-                            <li><a href="#syntax-filter">Filter</a></li>
-                            <li><a href="#syntax-filter-builtin">Builtin filters</a></li>
-                            <li><a href="#syntax-filter-builtin">Create Your Own Filters</a></li>
-                            <li><a href="#syntax-tag">Tag</a></li>
-                            <li><a href="#syntax-tag-builtin">Builtin Tags</a></li>
+                            <li><a href="#variable">Variable</a></li>
+                            <li><a href="#filter">Filter</a></li>
+                            <li>
+                                <a href="#builtinfilters">Builtin filters</a>
+                                <ul>
+                                    <li><a href="#trim">trim</a></li>
+                                    <li><a href="#ltrim">ltrim</a></li>
+                                    <li><a href="#rtrim">rtrim</a></li>
+                                    <li><a href="#add">add</a></li>
+                                    <li><a href="#capfirst">capfirst</a></li>
+                                    <li><a href="#cut">cut</a></li>
+                                    <li><a href="#default">default</a></li>
+                                    <li><a href="#sort">sort</a></li>
+                                    <li><a href="#reverse">reverse</a></li>
+                                    <li><a href="#escape">escape</a></li>
+                                    <li><a href="#length">length</a></li>
+                                    <li><a href="#lower">lower</a></li>
+                                    <li><a href="#upper">upper</a></li>
+                                    <li><a href="#striptags">striptags</a></li>
+                                    <li><a href="#title">title</a></li>
+                                    <li><a href="#truncate">truncate</a></li>
+                                </ul>
+                            </li>
+                            <li><a href="#createfilters">Create Your Own Filters</a></li>
+                            <li>
+                                <a href="#tag">Tag</a>
+                                <ul>
+                                    <li><a href="#if">if</a></li>
+                                    <li><a href="#for">for</a></li>
+                                    <li><a href="#comment">Comment</a></li>
+                                </ul>
+                            </li>
                         </ul>
                     </li>
                 </ul>
@@ -48,8 +82,7 @@ footer{margin:20px 0px}
                 <h2><a name="getstarted"></a>Get Started</h2>
                 <article>
                     <p>Write a demo template in script block with <code>type="text/template"</code>:</p>
-                    <pre><code>
-&lt;script type="text/template" id="demo0"&gt;
+                    <pre><code>&lt;script type="text/template" id="demo0"&gt;
     &lt;ul id="products"&gt;
       {% for product in products %}
         &lt;li&gt;
@@ -61,24 +94,21 @@ footer{margin:20px 0px}
         &lt;/li&gt;
       {% endfor %}
     &lt;/ul&gt;
-&lt;/script&gt;
-                    </code></pre>
+&lt;/script&gt;</code></pre>
                     <p>The Data source:</p>
-                    <pre><code>
-var data = {
+                    <pre><code>var data = {
     products:[
         {title:'The product name short description-1', price:199.89, description:'The detail information about the product-1.'},
         {title:'The product name short description-2', price:299.89, description:'The detail information about the product-2.'},
         {title:'The product name short description-3', price:399.89, description:'The detail information about the product-3.'},
         {title:'The product name short description-4', price:499.89, description:'The detail information about the product-4.'},
     ]
-};
-                    </code></pre>
+};</code></pre>
                     <p><a href="javascript:run_demo();">Run demo.</a>
                     <div class="result" id="result-0"></div>
                     </p>
                 </article>
-                <h2>Syntax</h2>
+                <h2><a name="syntax"></a>Syntax</h2>
                 <article>
                     <p>The Syntax of <b>Surge.js</b> is very like <a target="_blank" href="http://liquidmarkup.org/">Liquid</a> or <a target="_blank" href="https://docs.djangoproject.com/en/dev/topics/templates/">Django template</a>.
                     Which use "<b>{{</b>" and "<b>}}</b>" for marking up the variable, "<b>{%</b>" and "<b>%}</b>" for marking up flow control, "<b>{#</b>" and "<b>#}</b>" for marking up comment block. 
@@ -86,84 +116,71 @@ var data = {
                     function to register the filter.
                     </p>
                 </article>
-                <h3>Variable</h3>
+                <h3><a name="variable"></a>Variable</h3>
                 <article>
                     <p>
                         The variable is marked up with <b>{{</b> and <b>}}</b>. Example:
                     </p>
-                    <pre><code>
-&lt;h1&gt;{{ product.name }}&lt;/h1&gt;
-&lt;p&gt;{{ product.description }}&lt;/p&gt;
-                    </code></pre>
+                    <pre><code>&lt;h1&gt;{{ product.name }}&lt;/h1&gt;
+&lt;p&gt;{{ product.description }}&lt;/p&gt;</code></pre>
                     <p>Actually, you can aslo use constant, Such as :<code>{{ 12 }}</code>, <code>{{ "Welcome, You."}}</code>. Even, you don't need to worry about <b>"</b> and <b>'</b>, you can code like this:</p>
-                    <pre><code>
-&lt;li title="{{ "Demo" }}">{{ product.name }}&lt;li&gt;
-&lt;li title='{{ 'Demo' }}'>{{ product.name }}&lt;li&gt;
-                    </code></pre>
+                    <pre><code>&lt;li title="{{ "Demo" }}">{{ product.name }}&lt;li&gt;
+&lt;li title='{{ 'Demo' }}'>{{ product.name }}&lt;li&gt;</code></pre>
                 </article>
-                <h3>Filter</h3>
+                <h3><a name="filter"></a>Filter</h3>
                 <article>
                     <p>The filter is just the javascript function, The filter usage is like:</p>
-                    <pre><code>
-{{ product.name | title }}
+                    <pre><code>{{ product.name | title }}
 {{ product.name | title | truncate: 20 }}
-{{ product.name | truncate: 20 |title }}
-                    </code></pre>
+{{ product.name | truncate: 20 |title }}</code></pre>
                     <p>The both of "<code>title</code>" and "<code>truncate</code>" are filters. which decleard like <code>function title(a) {...</code> and <code>function truncate(a, count) {...</code>.
                     The <b>Surge.js</b> will compile these code to js expression, like below codes:</p>
-                    <pre><code>
-title(product.name)
+                    <pre><code>title(product.name)
 truncate(title(product.name), 20)
-title(truncate(product.name, 20))
-                    </code></pre>
+title(truncate(product.name, 20))</code></pre>
                     <p>The filter is not only used in variable, but also you can use filters with <b>if</b> and <b>for</b> tags. The following chapters will discuss them.</p>
                 </article>
-                <h3>Builtin filters</h3>
+                <h3><a name="builtinfilters"></a>Builtin filters</h3>
                 <p>The <b>Surge.js</b> predefine some filters.</p>
-                <h4>trim</h4>
+                
+                <h4><a name="trim"></a>trim</h4>
                 <p>Trim the white space started with string or ended with string.</p>
                 <p>Input source:</p>
                 <pre><code>{{ "   abc  "|trim }}</code></pre>
                 <p>Output: <code>abc</code> </p>
                 
-                <h4>ltrim</h4>
+                <h4><a name="ltrim"></a>ltrim</h4>
                 <p>Trim the white space started with string.</p>
                 <p>Input source:</p>
                 <pre><code>{{ "   abc  "|ltrim }}</code></pre>
                 <p>Output: <code>"abc   "</code> </p>
                 
-                <h4>rtrim</h4>
+                <h4><a name="rtrim"></a>rtrim</h4>
                 <p>Trim the white space ended with string.</p>
                 <p>Input source:</p>
                 <pre><code>{{ "   abc  "|rtrim }}</code></pre>
                 <p>Output: <code>"   abc"</code> </p>
                 
-                <h4>add</h4>
+                <h4><a name="add"></a>add</h4>
                 <p>Adds the argument to the value.</p>
                 <p>Input source:</p>
                 <pre><code>{{ 12|add:12 }}</code></pre>
                 <p>Output: <code>24</code> </p>
                 
-                <h4>addslashes</h4>
-                <p>Add slashes before ' and ".</p>
-                <p>Input source:</p>
-                <pre><code>{{ "I'm good boy."|addslashes }}</code></pre>
-                <p>Output: <code>"I\'m good boy."</code></p>
-                
-                <h4>capfirst</h4>
+                <h4><a name="capfirst"></a>capfirst</h4>
                 <p>Capitalizes the first character of the value. If the first character is not a letter, this filter has no effect.</p>
                 <p>Input source:</p>
                 <pre><code>{{ "surge"|addslashes }}</code></pre>
                 <p>Output: <code>"Surge"</code></p>
                 
                 
-                <h4>cut</h4>
+                <h4><a name="cut"></a>cut</h4>
                 <p>Removes all values of arg from the given string. The argment can be regex pattern.</p>
                 <p>Input source:</p>
                 <pre><code>{{ "String with spaces"|cut:" " }}</code></pre>
                 <p>Output: <code>"Stringwithspaces"</code></p>
                 
-                <h4>default</h4>
+                <h4><a name="default"></a>default</h4>
                 <p>If value evaluates to False, uses the given default. Otherwise, uses the value.</p>
                 <p>Input source:</p>
                 <pre><code>{{ value|default:"nothing" }}</code></pre>
@@ -171,18 +188,17 @@ title(truncate(product.name, 20))
                 <p class="notice">
                     [] is not false in javascript.
                 </p>
-                <h4>sort</h4>
-                <p>Takes a list of dictionaries and returns that list sorted by the key given in the argument.</p>
+                
+                <h4><a name="sort"></a>sort</h4>
+                <p>Takes a list of object and returns that list sorted by the key given in the argument, or use default argument.</p>
                 <p>For example:</p>
                 <pre><code>{{ value|sort:"name" }}</code></pre>
                 <p>If <code>value</code> is:</p>
-                <pre><code>
-[
+                <pre><code>[
     {'name': 'zed', 'age': 19},
     {'name': 'amy', 'age': 22},
     {'name': 'joe', 'age': 31},
-]
-                </code></pre>
+]</code></pre>
                 <p>then the output would be:</p>
                 <pre><code>[
     {'name': 'amy', 'age': 22},
@@ -204,10 +220,11 @@ title(truncate(product.name, 20))
                 This would be diff with js. Array.sort function will sort the item in Array as string, so the output would be:
                 <code>[1, 10, 12, 15, 9, 90]</code> in js.
                 </p>
-                <h4>reverse</h4>
+                
+                <h4><a name="reverse"></a>reverse</h4>
                 <p>Takes a list of dictionaries and returns that list sorted in reverse order by the key given in the argument. This works exactly the same as the above filter, but the returned value will be in reverse order.</p>
                 
-                <h4>escape</h4>
+                <h4><a name="escape"></a>escape</h4>
                 <p>Escapes a string's HTML. Specifically, it makes these replacements:</p>
                 <ul>
                     <li>&lt; is converted to &amp;lt;</li>
@@ -217,18 +234,59 @@ title(truncate(product.name, 20))
                     <li>&amp; is converted to &amp;amp;</li>
                 </ul>
                 
-                <h4>length</h4>
-                <p></p>
-                <h4>lower</h4>
-                <p></p>
-                <h4>upper</h4>
-                <p></p>
-                <h4>striptags</h4>
-                <p></p>
-                <h4>title</h4>
-                <p></p>
-                <h4>truncate</h4>
-                <p></p>
+                <h4><a name="length"></a>length</h4>
+                <p>Returns the length of the value. This works for both strings and lists.</p>
+                <p>For example:</p>
+                <pre><code>{{ value|length }}</code></pre>
+                <p>If <code>value</code> is <code>['a', 'b', 'c', 'd']</code>, the output will be <code>4</code>.</p>
+                
+                <h4><a name="lower"></a>lower</h4>
+                <p>Converts a string into all lowercase.</p>
+                <p>For example:</p>
+                <pre><code>{{ value|lower }}</code></pre>
+                <p>If <code>value</code> is <code>Still MAD At Yoko</code>, the output will be <code>still mad at yoko</code>.</p>
+                
+                <h4><a name="upper"></a>upper</h4>
+                <p>Converts a string into all uppercase.</p>
+                <p>For example:</p>
+                <pre><code>{{ value|upper }}</code></pre>
+                <p>If <code>value</code> is <code>"Joel is a slug"</code>, the output will be <code>"JOEL IS A SLUG"</code>.</p>
+                
+                
+                <h4><a name="striptags"></a>striptags</h4>
+                <p>Strips all [X]HTML tags.</p>
+                <p>For example:</p>
+                <pre><code>{{ value|striptags }}</code></pre>
+                <p>If <code>value</code> is <code>"&lt;b&gt;Joel&lt;/b&gt; &lt;button&gt;is&lt;/button&gt; a &lt;span&gt;slug&lt;/span&gt;"</code>, the output will be <code>"Joel is a slug"</code>.</p>
+                
+                <h4><a name="title"></a>title</h4>
+                <p>Converts a string into titlecase by making words start with an uppercase character and the remaining characters lowercase. This tag makes no effort to keep "trivial words" in lowercase.</p>
+                <p>For example:</p>
+                <pre><code>{{ value|title }}</code></pre>
+                <p>If <code>value</code> is <code>"my FIRST post"</code>, the output will be <code>"My First Post"</code>.</p>
+                
+                <h4><a name="truncate"></a>truncate</h4>
+                <p>Truncates a string if it is longer than the specified number of characters. Truncated strings will end with a translatable ellipsis sequence ("...").</p>
+                <p><b>Argument:</b> Number of characters to truncate to</p>
+                <p>For example:</p>
+                <pre><code>{{ value|truncate:9 }}</code></pre>
+                <p>If <code>value</code> is <code>"Joel is a slug"</code>, the output will be <code>"Joel is ..."</code>.</p>
+                
+                <h3><a name="createfilters"></a>Create Your Own Filters</h3>
+                <p>Create Your Own Filters</p>
+                
+                <h3><a name="tag"></a>Tag</h3>
+                <p>Tag</p>
+                
+                <h4><a name="if"></a>if</h4>
+                <p>if</p>
+                
+                <h4><a name="for"></a>for</h4>
+                <p>for</p>
+                
+                <h4><a name="comment"></a>Comment</h4>
+                <p>Comment</p>
+                
             </section>
         </div>
         <footer>
