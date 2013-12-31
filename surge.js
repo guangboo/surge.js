@@ -6,7 +6,7 @@
     
     surge.version = '0.2.2 Alpha';
     surge.debug = true;
-    var sj = surge.__builtins = {};
+    surge.__builtins = {};
     
     surge.register = function(name, func){ if(/^[_a-zA-Z]\w*/.test(name)) { this.__builtins[name] = func; return this; } throw '"' + name + '" is not valid filter name.'; };
     
@@ -217,7 +217,7 @@
                 var p2 = src.substr(fi + 1);
                 var val = _compiler.parse_filter(p1);
                 var fa = p2.split(':');
-                var f = "sj." + fa[0].trim();
+                var f = "surge.__builtins." + fa[0].trim();
                 if(fa.length > 1)
                     return f + '(' + val + ',' + fa[1].trim() + ')';
                 return f + '(' + val + ')';
