@@ -342,12 +342,10 @@
                 throw 'Syntax Error, \"' + tag_stack.join() + '\" need endtag signed.';
             }
             codes.push('} return _html.join(""); }');
-            //console.log(codes.join(''));
             return {render:eval('(' + codes.join('') + ')')};
         }
     };
     
     surge.compile = _compiler.compile;
-    //surge.parse_filter = _compiler.parse_filter;
     surge.get_template = _compiler.get;
 })(this);
