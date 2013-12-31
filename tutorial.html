@@ -85,21 +85,19 @@
 &lt;li&gt;
   &lt;h2 title="{{ product.title|title}}"&gt;{{ product.title | title | truncate:20 }}&lt;/h2&gt;
   Only {{ product.price }}
-
   &lt;p&gt;{{ product.description | truncate: 200  }}&lt;/p&gt;
-
 &lt;/li&gt;
 {% endfor %}
 &lt;/ul&gt;
 &lt;/script&gt;</code></pre>
             <p>The Data source:</p>
             <pre><code>var data = {
-products:[
-{title:'The product name short description-1', price:199.89, description:'The detail information about the product-1.'},
-{title:'The product name short description-2', price:299.89, description:'The detail information about the product-2.'},
-{title:'The product name short description-3', price:399.89, description:'The detail information about the product-3.'},
-{title:'The product name short description-4', price:499.89, description:'The detail information about the product-4.'},
-]
+  products:[
+    {title:'The product name short description-1', price:199.89, description:'The detail information about the product-1.'},
+    {title:'The product name short description-2', price:299.89, description:'The detail information about the product-2.'},
+    {title:'The product name short description-3', price:399.89, description:'The detail information about the product-3.'},
+    {title:'The product name short description-4', price:499.89, description:'The detail information about the product-4.'},
+  ]
 };</code></pre>
             <p><a href="javascript:run_demo();">Run demo.</a>
             <div class="result" id="result-0"></div>
