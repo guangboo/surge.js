@@ -310,7 +310,7 @@
                                         if(regex_for.test(token)) {
                                             var v = _compiler.parse_filter(RegExp.$2);
                                             var stmpt = 'var ' + var_name + '=' + v + ';';
-                                            stmpt += 'for(var i=0, j='+var_name+'.length;i<j;i++){var '+ RegExp.$1 + '='+var_name+'[i];';
+                                            stmpt += 'for(var i=0;i<' + var_name + '.length;i++){var '+ RegExp.$1 + '='+var_name+'[i];';
                                             codes.push(stmpt);
                                         } else {
                                             throw 'Syntax error for "for" expression.';
