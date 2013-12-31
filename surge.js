@@ -6,7 +6,7 @@
     
     surge.version = '0.2.2 Alpha';
     surge.debug = true;
-    surge.__builtins = {};
+    var _ = surge.__builtins = {};
     
     surge.register = function(name, func){ if(/^[_a-zA-Z]\w*/.test(name)) { this.__builtins[name] = func; return this; } throw '"' + name + '" is not valid filter name.'; };
     
@@ -217,7 +217,7 @@
                 var p2 = src.substr(fi + 1);
                 var val = _compiler.parse_filter(p1);
                 var fa = p2.split(':');
-                var f = "surge.__builtins." + fa[0].trim();
+                var f = "_." + fa[0].trim();
                 if(fa.length > 1)
                     return f + '(' + val + ',' + fa[1].trim() + ')';
                 return f + '(' + val + ')';
@@ -232,7 +232,7 @@
             var c, c2, c3;
             var pos, pos2;
             var codes = [];
-            codes.push('var _html = "";');
+            codes.push('function(context){ var _html = "";');
             var var_index = 1;
             var var_name;
             var tag_stack = [], if_nested_stack = [], if_tags = [], if_tag_deep = 0;
@@ -340,8 +340,9 @@
             if(tag_stack.length > 0){
                 throw 'Syntax Error, \"' + tag_stack.join() + '\" need endtag signed.';
             }
-            codes.push(' return _html;');
-            return {render:new Function('context', codes.join(''))};
+            codes.push(' return _html; }');
+            return {render:eval('(' + codes.join('') + ')')};
+            //return {render:new Function('context', codes.join(''))};
         }
     };
     
