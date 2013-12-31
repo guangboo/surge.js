@@ -4,13 +4,11 @@
   <head>
     <meta charset='utf-8' />
     <meta http-equiv="X-UA-Compatible" content="chrome=1" />
-    <meta name="description" content="{{ Surge.js }} : " />
-
-    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
-
-    <title>{{ Surge.js }}</title>
+    <title>Surge.js</title>
+    <meta name="description" content="Surge.js -- A Javascript template engine." />
+    <meta name="keywords" content="Surge.js, Javascript template, js template"/>
+    <link rel="stylesheet" type="text/css" media="screen" href="static/css/stylesheet.css">
   </head>
-
   <body>
 
     <!-- HEADER -->
@@ -18,9 +16,8 @@
         <header class="inner">
           <a id="forkme_banner" href="https://github.com/guangboo/surge.js">View on GitHub</a>
 
-          <h1 id="project_title">{{ Surge.js }}</h1>
+          <h1 id="project_title">Surge.js</h1>
           <h2 id="project_tagline"></h2>
-
             <section id="downloads">
               <a class="zip_download_link" href="https://github.com/guangboo/surge.js/zipball/master">Download this project as a .zip file</a>
               <a class="tar_download_link" href="https://github.com/guangboo/surge.js/tarball/master">Download this project as a tar.gz file</a>
@@ -31,37 +28,43 @@
     <!-- MAIN CONTENT -->
     <div id="main_content_wrap" class="outer">
       <section id="main_content" class="inner">
-        <p><a href="https://github.com/guangboo/surge.js"><strong>Surge.js</strong></a> is a new Javascript template engine.</p>
-
-<h3>
-<a name="tutorial" class="anchor" href="tutorial.html"><span class="octicon octicon-link">Tutorial</span></a></h3>
-<h3>
-<a name="authors-and-contributors" class="anchor" href="#authors-and-contributors"><span class="octicon octicon-link"></span></a>Authors and Contributors</h3>
-
-<p>Email:<a href="mailto:guangboo49@gmail.com">guangboo49@gmail.com</a>
-Weibo:<a href="http://weibo.com/guangboo">@广播张</a></p>
+        <p><a href="https://github.com/guangboo/surge.js"><strong>Surge.js</strong></a> is a new simple, fast Javascript template engine. which syntax is very like <a target="_blank" href="http://liquidmarkup.org/">Liquid</a> or <a target="_blank" href="https://docs.djangoproject.com/en/dev/topics/templates/">Django template</a>. <a href="https://github.com/guangboo/surge.js"><strong>Surge.js</strong></a> will parse the html template to javascript function, and the compiled function will be cached.</p>
+        <ul>
+            <li><a href="tutorial.html">Tutorial</a></li>
+            <li><a href="speed.html">Speed test</a/></li>
+        </ul>
+        <p>V8 Javascript engine test result.</p>
+        <p><a href="speed.html"><img src="static/img/chrome31.png"/></a></p>
+        <p>The test result with IE 10.</p>
+        <p><a href="speed.html"><img src="static/img/ie10.png"/></a></p>
+        <p>The test result with Firefox 26.</p>
+        <p><a href="speed.html"><img src="static/img/firefox26.png"/></a></p>
+        <h3>
+        <a name="authors-and-contributors" class="anchor" href="#authors-and-contributors"><span class="octicon octicon-link"></span></a>Authors and Contributors</h3>
+        <p>Email:<a href="mailto:guangboo49@gmail.com">guangboo49@gmail.com</a>
+        Weibo:<a href="http://weibo.com/guangboo">@广播张</a></p>
       </section>
     </div>
 
     <!-- FOOTER  -->
     <div id="footer_wrap" class="outer">
       <footer class="inner">
-        <p class="copyright">{{ Surge.js }} maintained by <a href="https://github.com/guangboo">guangboo</a></p>
+        <footer class="inner">
+        <p class="copyright">Surge.js maintained by <a href="mailto:guangboo49@gmail.com">Theo, &lt;guangboo49@gmail.com&gt;</a></p>
         <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
       </footer>
     </div>
 
-              <script type="text/javascript">
-            var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-            document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-          </script>
-          <script type="text/javascript">
-            try {
-              var pageTracker = _gat._getTracker("UA-46703623-1");
+    <script type="text/javascript">
+        var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+        document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+    </script>
+    <script type="text/javascript">
+        try {
+            var pageTracker = _gat._getTracker("UA-46703623-1");
             pageTracker._trackPageview();
-            } catch(err) {}
-          </script>
-
-
+        } catch(err) {}
+    </script>
   </body>
 </html>

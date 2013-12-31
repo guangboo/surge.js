@@ -3,14 +3,16 @@
   <head>
     <meta charset='utf-8' />
     <meta http-equiv="X-UA-Compatible" content="chrome=1" />
-    <meta name="description" content="{{ Surge.js }} : " />
-    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+    <title>Surge.js -- Tutorial</title>
+    <meta name="description" content="Surge.js -- A Javascript template engine." />
+    <meta name="keywords" content="Surge.js, Javascript template, js template"/>
+    <link rel="stylesheet" type="text/css" media="screen" href="static/css/stylesheet.css">
     <style type="text/css">
       .result{background:#eee;border:1px solid #ccc;}
       .notice{padding:15px;background:#fcc;margin-right:0px;border-top:1px solid #c99;border-bottom:1px solid #c99}
     </style>
     <script src="https://rawgithub.com/guangboo/surge.js/master/surge.min.js"></script>
-    <title>{{ Surge.js }}</title>
+    
   </head>
 
   <body>
@@ -20,7 +22,7 @@
         <header class="inner">
           <a id="forkme_banner" href="https://github.com/guangboo/surge.js">View on GitHub</a>
 
-          <h1 id="project_title">{{ Surge.js }}</h1>
+          <h1 id="project_title">Surge.js</h1>
           <h2 id="project_tagline"></h2>
 
             <section id="downloads">
@@ -214,7 +216,7 @@ title(truncate(product.name, 20))</code></pre>
         
         <p>then the output would be:</p>
         <pre><code>[1,9,10,12,15,90]</code></pre>
-        </p>Or</p>
+        <p>Or</p>
         <pre><code>["1", "10", "12", "15", "9", "90"]</code></pre>
         <p class="notice">
         This would be diff with js. Array.sort function will sort the item in Array as string, so the output would be:
@@ -288,6 +290,15 @@ title(truncate(product.name, 20))</code></pre>
         <p>Comment</p>
         
     </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Surge.js maintained by <a href="mailto:guangboo49@gmail.com">Theo, &lt;guangboo49@gmail.com&gt;</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
     
     <script type="text/template" id="demo0">
     <ul id="products">
@@ -318,27 +329,15 @@ title(truncate(product.name, 20))</code></pre>
         result.innerHTML = surge.compile(tmpl).render(data);
     }
     </script>
-    </div>
-
-    <!-- FOOTER  -->
-    <div id="footer_wrap" class="outer">
-      <footer class="inner">
-        <p class="copyright">{{ Surge.js }} maintained by <a href="https://github.com/guangboo">guangboo</a></p>
-        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
-      </footer>
-    </div>
-
-              <script type="text/javascript">
-            var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-            document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-          </script>
-          <script type="text/javascript">
-            try {
-              var pageTracker = _gat._getTracker("UA-46703623-1");
+    <script type="text/javascript">
+        var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+        document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+    </script>
+    <script type="text/javascript">
+        try {
+            var pageTracker = _gat._getTracker("UA-46703623-1");
             pageTracker._trackPageview();
-            } catch(err) {}
-          </script>
-
-
+        } catch(err) {}
+    </script>
   </body>
 </html>
