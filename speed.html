@@ -51,7 +51,7 @@
                 var source = document.getElementById('surge_template').innerHTML;
                 var tmpl = surge.compile(source);
                 for (var i = 0; i < number; i ++) {
-                    tmpl.render(data);
+                    surge.compile(source);
                 }
             }
         },
