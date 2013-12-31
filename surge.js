@@ -232,8 +232,7 @@
             var c, c2, c3;
             var pos, pos2;
             var codes = [];
-            codes.push('function(context) {with(context){');
-            codes.push('var _html = [];');
+            codes.push('var _html = "";');
             var var_index = 1;
             var var_name;
             var tag_stack = [], if_nested_stack = [], if_tags = [], if_tag_deep = 0;
@@ -247,7 +246,7 @@
                     case '{':
                         if(!scanner.eos()) {
                             if(pos > pos2) {
-                                codes.push('_html.push("' + escap_str(scanner.copy(pos2, pos)) + '");');
+                                codes.push('_html+="' + escap_str(scanner.copy(pos2, pos)) + '";');
                             }
                             pos2 = scanner.position;
                             c2 = scanner.pop();
@@ -259,7 +258,7 @@
                                     if(pos2 != -1) {
                                         var token = scanner.copy(pos - 1, pos2 - 2).trim();
                                         var v = _compiler.parse_filter(token);
-                                        codes.push('try { _html.push(' + v + '); } catch(e){}');
+                                        codes.push('_html+=' + v + ';');
                                     } else {
                                         throw 'Syntax Error, "}}" is required.';
                                     }
@@ -328,21 +327,21 @@
                             } else if(c2 === '#') {
                                 pos2 = scanner.skipTo('#}');
                             } else {
-                                codes.push('_html.push("' + escap_str(scanner.copy(pos, pos2)) + '");');
+                                codes.push('_html += "' + escap_str(scanner.copy(pos, pos2)) + '";');
                             }
                         }
                         break;
                 }
             }
             if(pos > pos2) {
-                codes.push('_html.push("' + escap_str(scanner.copy(pos2, pos + 1)) + '");');
+                codes.push('_html += "' + escap_str(scanner.copy(pos2, pos + 1)) + '";');
             }
             
             if(tag_stack.length > 0){
                 throw 'Syntax Error, \"' + tag_stack.join() + '\" need endtag signed.';
             }
-            codes.push('} return _html.join(""); }');
-            return {render:eval('(' + codes.join('') + ')')};
+            codes.push(' return _html;');
+            return new Function('context', codes.join(''));
         }
     };
     
