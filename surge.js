@@ -341,7 +341,7 @@
                 throw 'Syntax Error, \"' + tag_stack.join() + '\" need endtag signed.';
             }
             codes.push(' return _html;');
-            return new Function('context', codes.join(''));
+            return {render:new Function('context', codes.join(''))};
         }
     };
     
