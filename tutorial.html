@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="{{ Surge.js }} : " />
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+    <script src="https://rawgithub.com/guangboo/surge.js/master/surge.js"></script>
+    <title>{{ Surge.js }}</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/guangboo/surge.js">View on GitHub</a>
+
+          <h1 id="project_title">{{ Surge.js }}</h1>
+          <h2 id="project_tagline"></h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/guangboo/surge.js/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/guangboo/surge.js/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <ul>
+            <li><a href="#intro">Introduction</a></li>
+            <li><a href="#getstarted">Get Started</a></li>
+            <li>
+                <a href="#syntax">Syntax</a>
+                <ul>
+                    <li><a href="#variable">Variable</a></li>
+                    <li><a href="#filter">Filter</a></li>
+                    <li>
+                        <a href="#builtinfilters">Builtin filters</a>
+                        <ul>
+                            <li><a href="#trim">trim</a></li>
+                            <li><a href="#ltrim">ltrim</a></li>
+                            <li><a href="#rtrim">rtrim</a></li>
+                            <li><a href="#add">add</a></li>
+                            <li><a href="#capfirst">capfirst</a></li>
+                            <li><a href="#cut">cut</a></li>
+                            <li><a href="#default">default</a></li>
+                            <li><a href="#sort">sort</a></li>
+                            <li><a href="#reverse">reverse</a></li>
+                            <li><a href="#escape">escape</a></li>
+                            <li><a href="#length">length</a></li>
+                            <li><a href="#lower">lower</a></li>
+                            <li><a href="#upper">upper</a></li>
+                            <li><a href="#striptags">striptags</a></li>
+                            <li><a href="#title">title</a></li>
+                            <li><a href="#truncate">truncate</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="#createfilters">Create Your Own Filters</a></li>
+                    <li>
+                        <a href="#tag">Tag</a>
+                        <ul>
+                            <li><a href="#if">if</a></li>
+                            <li><a href="#for">for</a></li>
+                            <li><a href="#comment">Comment</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </li>
+        </ul>
+      </section>
+      <section class="chapter">
+        <h2><a name="intro"></a>Introduction</h2>
+        <article class="para">
+            <p><b>Surge.js</b> is a Javascript template engine. It will be compile the compile to javascript function.</p>
+        </article>
+        <h2><a name="getstarted"></a>Get Started</h2>
+        <article>
+            <p>Write a demo template in script block with <code>type="text/template"</code>:</p>
+            <pre><code>&lt;script type="text/template" id="demo0"&gt;
+&lt;ul id="products"&gt;
+{% for product in products %}
+&lt;li&gt;
+  &lt;h2 title="{{ product.title|title}}"&gt;{{ product.title | title | truncate:20 }}&lt;/h2&gt;
+  Only {{ product.price }}
+
+  &lt;p&gt;{{ product.description | truncate: 200  }}&lt;/p&gt;
+
+&lt;/li&gt;
+{% endfor %}
+&lt;/ul&gt;
+&lt;/script&gt;</code></pre>
+            <p>The Data source:</p>
+            <pre><code>var data = {
+products:[
+{title:'The product name short description-1', price:199.89, description:'The detail information about the product-1.'},
+{title:'The product name short description-2', price:299.89, description:'The detail information about the product-2.'},
+{title:'The product name short description-3', price:399.89, description:'The detail information about the product-3.'},
+{title:'The product name short description-4', price:499.89, description:'The detail information about the product-4.'},
+]
+};</code></pre>
+            <p><a href="javascript:run_demo();">Run demo.</a>
+            <div class="result" id="result-0"></div>
+            </p>
+        </article>
+        <h2><a name="syntax"></a>Syntax</h2>
+        <article>
+            <p>The Syntax of <b>Surge.js</b> is very like <a target="_blank" href="http://liquidmarkup.org/">Liquid</a> or <a target="_blank" href="https://docs.djangoproject.com/en/dev/topics/templates/">Django template</a>.
+            Which use "<b>{{</b>" and "<b>}}</b>" for marking up the variable, "<b>{%</b>" and "<b>%}</b>" for marking up flow control, "<b>{#</b>" and "<b>#}</b>" for marking up comment block. 
+            And also, you can use Javascript function to filter variable, that is named filter. The surge define some builtin filters, can also, you can define your own filter, just use <code>surge.register</code>
+            function to register the filter.
+            </p>
+        </article>
+        <h3><a name="variable"></a>Variable</h3>
+        <article>
+            <p>
+                The variable is marked up with <b>{{</b> and <b>}}</b>. Example:
+            </p>
+            <pre><code>&lt;h1&gt;{{ product.name }}&lt;/h1&gt;
+&lt;p&gt;{{ product.description }}&lt;/p&gt;</code></pre>
+            <p>Actually, you can aslo use constant, Such as :<code>{{ 12 }}</code>, <code>{{ "Welcome, You."}}</code>. Even, you don't need to worry about <b>"</b> and <b>'</b>, you can code like this:</p>
+            <pre><code>&lt;li title="{{ "Demo" }}">{{ product.name }}&lt;li&gt;
+&lt;li title='{{ 'Demo' }}'>{{ product.name }}&lt;li&gt;</code></pre>
+        </article>
+        <h3><a name="filter"></a>Filter</h3>
+        <article>
+            <p>The filter is just the javascript function, The filter usage is like:</p>
+            <pre><code>{{ product.name | title }}
+{{ product.name | title | truncate: 20 }}
+{{ product.name | truncate: 20 |title }}</code></pre>
+            <p>The both of "<code>title</code>" and "<code>truncate</code>" are filters. which decleard like <code>function title(a) {...</code> and <code>function truncate(a, count) {...</code>.
+            The <b>Surge.js</b> will compile these code to js expression, like below codes:</p>
+            <pre><code>title(product.name)
+truncate(title(product.name), 20)
+title(truncate(product.name, 20))</code></pre>
+            <p>The filter is not only used in variable, but also you can use filters with <b>if</b> and <b>for</b> tags. The following chapters will discuss them.</p>
+        </article>
+        <h3><a name="builtinfilters"></a>Builtin filters</h3>
+        <p>The <b>Surge.js</b> predefine some filters.</p>
+        
+        <h4><a name="trim"></a>trim</h4>
+        <p>Trim the white space started with string or ended with string.</p>
+        <p>Input source:</p>
+        <pre><code>{{ "   abc  "|trim }}</code></pre>
+        <p>Output: <code>abc</code> </p>
+        
+        <h4><a name="ltrim"></a>ltrim</h4>
+        <p>Trim the white space started with string.</p>
+        <p>Input source:</p>
+        <pre><code>{{ "   abc  "|ltrim }}</code></pre>
+        <p>Output: <code>"abc   "</code> </p>
+        
+        <h4><a name="rtrim"></a>rtrim</h4>
+        <p>Trim the white space ended with string.</p>
+        <p>Input source:</p>
+        <pre><code>{{ "   abc  "|rtrim }}</code></pre>
+        <p>Output: <code>"   abc"</code> </p>
+        
+        <h4><a name="add"></a>add</h4>
+        <p>Adds the argument to the value.</p>
+        <p>Input source:</p>
+        <pre><code>{{ 12|add:12 }}</code></pre>
+        <p>Output: <code>24</code> </p>
+        
+        <h4><a name="capfirst"></a>capfirst</h4>
+        <p>Capitalizes the first character of the value. If the first character is not a letter, this filter has no effect.</p>
+        <p>Input source:</p>
+        <pre><code>{{ "surge"|addslashes }}</code></pre>
+        <p>Output: <code>"Surge"</code></p>
+        
+        
+        <h4><a name="cut"></a>cut</h4>
+        <p>Removes all values of arg from the given string. The argment can be regex pattern.</p>
+        <p>Input source:</p>
+        <pre><code>{{ "String with spaces"|cut:" " }}</code></pre>
+        <p>Output: <code>"Stringwithspaces"</code></p>
+        
+        <h4><a name="default"></a>default</h4>
+        <p>If value evaluates to False, uses the given default. Otherwise, uses the value.</p>
+        <p>Input source:</p>
+        <pre><code>{{ value|default:"nothing" }}</code></pre>
+        <p>If <code>value</code> is one of "", 0, [], false, undefined, the output will be <code>"nothing"</code>, or output is <code>value</code>.</p>
+        <p class="notice">
+            [] is not false in javascript.
+        </p>
+        
+        <h4><a name="sort"></a>sort</h4>
+        <p>Takes a list of object and returns that list sorted by the key given in the argument, or use default argument.</p>
+        <p>For example:</p>
+        <pre><code>{{ value|sort:"name" }}</code></pre>
+        <p>If <code>value</code> is:</p>
+        <pre><code>[
+{'name': 'zed', 'age': 19},
+{'name': 'amy', 'age': 22},
+{'name': 'joe', 'age': 31},
+]</code></pre>
+        <p>then the output would be:</p>
+        <pre><code>[
+{'name': 'amy', 'age': 22},
+{'name': 'joe', 'age': 31},
+{'name': 'zed', 'age': 19},
+]</code></pre>
+        <p>Also this filter can used with Array argument, For example:</p>
+        <pre><code>{{ value|sort }}</code></pre>
+        <p>If <code>value</code> is:</p>
+        <pre><code>[1,15,80,9,10,12]</code></pre>
+        <p>Or</p>
+        <pre><code>["1", "15", "80", "9", "10", "12"]</code></pre>
+        
+        <p>then the output would be:</p>
+        <pre><code>[1,9,10,12,15,90]</code></pre>
+        </p>Or</p>
+        <pre><code>["1", "10", "12", "15", "9", "90"]</code></pre>
+        <p class="notice">
+        This would be diff with js. Array.sort function will sort the item in Array as string, so the output would be:
+        <code>[1, 10, 12, 15, 9, 90]</code> in js.
+        </p>
+        
+        <h4><a name="reverse"></a>reverse</h4>
+        <p>Takes a list of dictionaries and returns that list sorted in reverse order by the key given in the argument. This works exactly the same as the above filter, but the returned value will be in reverse order.</p>
+        
+        <h4><a name="escape"></a>escape</h4>
+        <p>Escapes a string's HTML. Specifically, it makes these replacements:</p>
+        <ul>
+            <li>&lt; is converted to &amp;lt;</li>
+            <li>&gt; is converted to &amp;gt;</li>
+            <li>' (single quote) is converted to &amp;#39;</li>
+            <li>" (double quote) is converted to &amp;quot;</li>
+            <li>&amp; is converted to &amp;amp;</li>
+        </ul>
+        
+        <h4><a name="length"></a>length</h4>
+        <p>Returns the length of the value. This works for both strings and lists.</p>
+        <p>For example:</p>
+        <pre><code>{{ value|length }}</code></pre>
+        <p>If <code>value</code> is <code>['a', 'b', 'c', 'd']</code>, the output will be <code>4</code>.</p>
+        
+        <h4><a name="lower"></a>lower</h4>
+        <p>Converts a string into all lowercase.</p>
+        <p>For example:</p>
+        <pre><code>{{ value|lower }}</code></pre>
+        <p>If <code>value</code> is <code>Still MAD At Yoko</code>, the output will be <code>still mad at yoko</code>.</p>
+        
+        <h4><a name="upper"></a>upper</h4>
+        <p>Converts a string into all uppercase.</p>
+        <p>For example:</p>
+        <pre><code>{{ value|upper }}</code></pre>
+        <p>If <code>value</code> is <code>"Joel is a slug"</code>, the output will be <code>"JOEL IS A SLUG"</code>.</p>
+        
+        
+        <h4><a name="striptags"></a>striptags</h4>
+        <p>Strips all [X]HTML tags.</p>
+        <p>For example:</p>
+        <pre><code>{{ value|striptags }}</code></pre>
+        <p>If <code>value</code> is <code>"&lt;b&gt;Joel&lt;/b&gt; &lt;button&gt;is&lt;/button&gt; a &lt;span&gt;slug&lt;/span&gt;"</code>, the output will be <code>"Joel is a slug"</code>.</p>
+        
+        <h4><a name="title"></a>title</h4>
+        <p>Converts a string into titlecase by making words start with an uppercase character and the remaining characters lowercase. This tag makes no effort to keep "trivial words" in lowercase.</p>
+        <p>For example:</p>
+        <pre><code>{{ value|title }}</code></pre>
+        <p>If <code>value</code> is <code>"my FIRST post"</code>, the output will be <code>"My First Post"</code>.</p>
+        
+        <h4><a name="truncate"></a>truncate</h4>
+        <p>Truncates a string if it is longer than the specified number of characters. Truncated strings will end with a translatable ellipsis sequence ("...").</p>
+        <p><b>Argument:</b> Number of characters to truncate to</p>
+        <p>For example:</p>
+        <pre><code>{{ value|truncate:9 }}</code></pre>
+        <p>If <code>value</code> is <code>"Joel is a slug"</code>, the output will be <code>"Joel is ..."</code>.</p>
+        
+        <h3><a name="createfilters"></a>Create Your Own Filters</h3>
+        <p>Create Your Own Filters</p>
+        
+        <h3><a name="tag"></a>Tag</h3>
+        <p>Tag</p>
+        
+        <h4><a name="if"></a>if</h4>
+        <p>if</p>
+        
+        <h4><a name="for"></a>for</h4>
+        <p>for</p>
+        
+        <h4><a name="comment"></a>Comment</h4>
+        <p>Comment</p>
+        
+    </section>
+    
+    <script type="text/template" id="demo0">
+    <ul id="products">
+      {% for product in products %}
+        <li>
+          <h2 title="{{ product.title|title}}">{{ product.title | title | truncate:20 }}</h2>
+          Only {{ product.price }}
+          
+          <p>{{ product.description | truncate: 200  }}</p>
+          
+        </li>
+      {% endfor %}
+    </ul>
+    </script>
+    <script>
+    function run_demo(){
+        var data = {
+            products:[
+                {title:'The product name short description-1', price:199.89, description:'The detail information about the product-1.'},
+                {title:'The product name short description-2', price:299.89, description:'The detail information about the product-2.'},
+                {title:'The product name short description-3', price:399.89, description:'The detail information about the product-3.'},
+                {title:'The product name short description-4', price:499.89, description:'The detail information about the product-4.'}
+            ]
+        };
+        
+        var tmpl = document.getElementById('demo0').innerHTML;
+        var result = document.getElementById('result-0');
+        result.innerHTML = surge.compile(tmpl).render(data);
+    }
+    </script>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">{{ Surge.js }} maintained by <a href="https://github.com/guangboo">guangboo</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+              <script type="text/javascript">
+            var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+            document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+          </script>
+          <script type="text/javascript">
+            try {
+              var pageTracker = _gat._getTracker("UA-46703623-1");
+            pageTracker._trackPageview();
+            } catch(err) {}
+          </script>
+
+
+  </body>
+</html>
