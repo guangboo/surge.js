@@ -13,6 +13,8 @@
     var regex_trim = /^\s+|\s+$/g,
         regex_for = /(\w+)\s+in\s+(.*)/,
         regex_with = /((?:\w+)\s*=\s*(?:[\w\.]+))+/g;
+        regex_number = /^[-+\.]?\d[\d\.e]*$/,
+        regex_const_string = /^(['"]).*\1$/;
     
     var escapeMap = {
         '<' : '&lt;',
@@ -26,6 +28,10 @@
         String.prototype.trim = function(){ return this.replace(regex_trim, ''); };
     
     function is_true(a) { return !!a && (!(a instanceof Array) || a.length > 0); }
+    function is_number(a) { return regex_number.test(a); }
+    function is_string(a) { return regex_const_string.test(a); }
+    function is_constant(a) { return is_number(a) || is_string(a); }
+    
     surge.is_true = is_true;
     
     surge.register('trim', function(a) { 
@@ -194,158 +200,187 @@
     function escap_str(token){
         return token.replace(/("|')/g, '\\$1').replace(/(\t|\r|\n)/g, function(m){ return space_map[m.charCodeAt()]; });
     }
-    var _compiler = {
-        get : function(id){
-            var tmplt;
-            if(_cache.hasOwnProperty(id)) {
-                tmplt = _cache[id];
-            } else if('document' in global) {
-                var ele = document.getElementById(id);
-                if(ele) {
-                    var src = ele.value || ele.innerHTML;
-                    tmplt = _compiler.compile(src.trim());
-                    _cache[id] = tmplt;
-                }
+
+    surge.get_template = function(id){
+        var tmplt;
+        if(_cache.hasOwnProperty(id)) {
+            tmplt = _cache[id];
+        } else if('document' in global) {
+            var ele = document.getElementById(id);
+            if(ele) {
+                var src = ele.value || ele.innerHTML;
+                tmplt = surge.compile(src.trim());
+                _cache[id] = tmplt;
             }
-            return tmplt;
-        },
+        }
+        return tmplt;
+    };
+    
+    surge.compile = function(source) {
+        var scanner = new Scanner(source);
+        scanner.skipWhiteSpace();
+        var c, c2, c3;
+        var pos, pos2;
+        var codes = '';
+        codes += 'var _html = "";var _ = surge.__builtins;';
+        var var_index = 1;
+        var var_name;
+        var tag_stack = [], var_stack = [];
         
-        parse_filter:function(src) {
+        function has_var(v) {
+            return var_stack.indexOf(v) !== -1;
+        }
+        
+        function parse_filter(src) {
             var fi = src.lastIndexOf('|');
             if(fi > 0) {
                 var p1 = src.substr(0, fi);
                 var p2 = src.substr(fi + 1);
-                var val = _compiler.parse_filter(p1);
+                var val = parse_filter(p1);
                 var fa = p2.split(':');
                 var f = "_." + fa[0].trim();
                 if(fa.length > 1)
                     return f + '(' + val + ',' + fa[1].trim() + ')';
                 return f + '(' + val + ')';
             } else {
-                return src.trim();
-            }
-        },
-        
-        compile : function(source) {
-            var scanner = new Scanner(source);
-            scanner.skipWhiteSpace();
-            var c, c2, c3;
-            var pos, pos2;
-            var codes = [];
-            codes.push('function(context){ var _html = "";');
-            var var_index = 1;
-            var var_name;
-            var tag_stack = [], if_nested_stack = [], if_tags = [], if_tag_deep = 0;
-            
-            pos2 = scanner.position;
-            
-            while(!scanner.eos()){
-                pos = scanner.position;
-                c = scanner.pop();
-                switch(c) {
-                    case '{':
-                        if(!scanner.eos()) {
-                            if(pos > pos2) {
-                                codes.push('_html+="' + escap_str(scanner.copy(pos2, pos)) + '";');
-                            }
-                            pos2 = scanner.position;
-                            c2 = scanner.pop();
-                            if (c2 === '{') {
-                                c3 = scanner.pop();
-                                if(c3 != '{') {
-                                    pos = scanner.position;
-                                    pos2 = scanner.skipTo('}}');
-                                    if(pos2 != -1) {
-                                        var token = scanner.copy(pos - 1, pos2 - 2).trim();
-                                        var v = _compiler.parse_filter(token);
-                                        codes.push('_html+=' + v + ';');
-                                    } else {
-                                        throw 'Syntax Error, "}}" is required.';
-                                    }
-                                }
-                            } else if(c2 === '%') {
-                                scanner.skipWhiteSpace();
-                                var word = scanner.readWord();
-                                scanner.skipWhiteSpace();
-                                pos = scanner.position;
-                                
-                                pos2 = scanner.skipTo('%}');
-                                if(pos2 > -1) {
-                                    var token = scanner.copy(pos, pos2 - 2).trim();
-                                    if(word == 'if' || word == 'elif'){
-                                        var parts = token.split(/\s*(and|or|\(|\))\s*/g);
-                                        var cs = [];
-                                        for(var i = 0; i < parts.length; i++){
-                                            var p = parts[i];
-                                            if(!(/and|or|\(|\)/.test(p))){
-                                                var v = _compiler.parse_filter(token);
-                                                cs.push('is_true(' + v + ')');
-                                            } else if(p == 'and'){
-                                                cs.push('&&');
-                                            } else if(p == 'or'){
-                                                cs.push('||');
-                                            } else {
-                                                cs.push(p);
-                                            }
-                                        }
-                                        if(word == 'if') {
-                                            tag_stack.push('if');
-                                            codes.push('if(' + cs.join() + '){');
-                                        }else{
-                                            codes.push('} else if(' + cs.join() + '){');
-                                        }
-                                    } else if(word == 'else'){
-                                        codes.push('} else {');
-                                    } else if(word == 'endfor' || word == 'endif' || word == 'endwith'){
-                                        var exp_tag = tag_stack.pop();
-                                        if(word == 'end' + exp_tag){
-                                            codes.push('}');
-                                        } else {
-                                            throw 'Syntax Error, Block tag ' + exp_tag + ' required end' + exp_tag + ' as endtag sign.';
-                                        }
-                                    } else if(word == 'for'){
-                                        tag_stack.push('for');
-                                        var_name = '$var_' + (var_index++);
-                                        
-                                        if(regex_for.test(token)) {
-                                            var v = _compiler.parse_filter(RegExp.$2);
-                                            var stmpt = 'var ' + var_name + '=' + v + ';';
-                                            stmpt += 'for(var i=0,j=' + var_name + '.length;i<j;i++){var '+ RegExp.$1 + '='+var_name+'[i];';
-                                            codes.push(stmpt);
-                                        } else {
-                                            throw 'Syntax error for "for" expression.';
-                                        }
-                                    } else if(word == 'with'){
-                                        tag_stack.push('with');
-                                        var parts = token.match(regex_with);
-                                        codes.push('{');
-                                        for(var i = 0; i < parts.length; i++){
-                                            codes.push('var ' + parts[i] + ';');
-                                        }
-                                    }
-                                }
-                            } else if(c2 === '#') {
-                                pos2 = scanner.skipTo('#}');
-                            } else {
-                                codes.push('_html += "' + escap_str(scanner.copy(pos, pos2)) + '";');
-                            }
-                        }
-                        break;
+                src = src.trim();
+                if(is_constant(src) || has_var(src.split('.')[0]))
+                    return src;
+                else {
+                    return 'context.' + src;
                 }
             }
-            if(pos > pos2) {
-                codes.push('_html += "' + escap_str(scanner.copy(pos2, pos + 1)) + '";');
-            }
-            
-            if(tag_stack.length > 0){
-                throw 'Syntax Error, \"' + tag_stack.join() + '\" need endtag signed.';
-            }
-            codes.push(' return _html; }');
-            return {render:eval('(' + codes.join('') + ')')};
-            //return {render:new Function('context', codes.join(''))};
         }
+        
+        pos2 = scanner.position;
+        
+        while(!scanner.eos()){
+            pos = scanner.position;
+            c = scanner.pop();
+            switch(c) {
+                case '{':
+                    if(!scanner.eos()) {
+                        if(pos > pos2) {
+                            codes += '_html+="' + escap_str(scanner.copy(pos2, pos)) + '";';
+                        }
+                        pos2 = scanner.position;
+                        c2 = scanner.pop();
+                        if (c2 === '{') {
+                            c3 = scanner.pop();
+                            if(c3 != '{') {
+                                pos = scanner.position;
+                                pos2 = scanner.skipTo('}}');
+                                if(pos2 != -1) {
+                                    var token = scanner.copy(pos - 1, pos2 - 2).trim();
+                                    var v = parse_filter(token);
+                                    codes += '_html+=' + v + ';';
+                                } else {
+                                    throw 'Syntax Error, "}}" is required.';
+                                }
+                            }
+                        } else if(c2 === '%') {
+                            scanner.skipWhiteSpace();
+                            var word = scanner.readWord();
+                            scanner.skipWhiteSpace();
+                            pos = scanner.position;
+                            
+                            pos2 = scanner.skipTo('%}');
+                            if(pos2 > -1) {
+                                var token = scanner.copy(pos, pos2 - 2).trim();
+                                if(word == 'if' || word == 'elif'){
+                                    var parts = token.split(/\s*(and|or|\(|\))\s*/g);
+                                    var cs = [];
+                                    for(var i = 0; i < parts.length; i++){
+                                        var p = parts[i];
+                                        
+                                        if(is_constant(p)){
+                                            cs.push(p);
+                                        } else if(!(/and|or|\(|\)/.test(p))){
+                                            var ps = p.split(/(==|>=|<=|<|>)/);
+                                            var v = '';
+                                            if(ps.length > 1) {
+                                                v = '(';
+                                                for(var j = 0; j < ps.length; j++){
+                                                    var psi = ps[j];
+                                                    if(is_constant(psi) || /==|>=|<=|<|>/.test(psi)) {
+                                                        v += psi;
+                                                    } else {
+                                                        v += parse_filter(psi);
+                                                    }
+                                                }
+                                                v += ')';
+                                                cs.push(v);
+                                            }else{
+                                                v = parse_filter(p);
+                                                cs.push('surge.is_true(' + v + ')');
+                                            }
+                                        } else if(p == 'and'){
+                                            cs.push('&&');
+                                        } else if(p == 'or'){
+                                            cs.push('||');
+                                        } else {
+                                            cs.push(p);
+                                        }
+                                    }
+                                    if(word == 'if') {
+                                        tag_stack.push('if');
+                                        codes +='if(' + cs.join('') + '){';
+                                    }else{
+                                        codes += '} else if(' + cs.join('') + '){';
+                                    }
+                                } else if(word == 'else'){
+                                    codes += '} else {';
+                                } else if(word == 'endfor' || word == 'endif' || word == 'endwith'){
+                                    var exp_tag = tag_stack.pop();
+                                    if(word === 'end' + exp_tag){
+                                        codes += '}';
+                                        if(word === 'endfor' || word === 'endwith') var_stack.pop();
+                                    } else {
+                                        throw 'Syntax Error, Block tag ' + exp_tag + ' required end' + exp_tag + ' as endtag sign.';
+                                    }
+                                } else if(word == 'for'){
+                                    tag_stack.push('for');
+                                    var_name = '$var_' + (var_index++);
+                                    
+                                    if(regex_for.test(token)) {
+                                        var v = parse_filter(RegExp.$2);
+                                        var stmpt = 'var ' + var_name + '=' + v + ';';
+                                        stmpt += 'for(var i=0,j=' + var_name + '.length;i<j;i++){var '+ RegExp.$1 + '='+var_name+'[i];';
+                                        var_stack.push(RegExp.$1);
+                                        codes += stmpt;
+                                    } else {
+                                        throw 'Syntax error for "for" expression.';
+                                    }
+                                } else if(word == 'with'){
+                                    tag_stack.push('with');
+                                    var parts = token.match(regex_with);
+                                    codes += '{';
+                                    for(var i = 0; i < parts.length; i++){
+                                        var ps = parts[i].split('=');
+                                        var v1 = ps[0].trim(), v2 = parse_filter(ps[1].trim());
+                                        codes += 'var ' + v1 + '=' + v2 + ';';
+                                        var_stack.push(v1);
+                                    }
+                                }
+                            }
+                        } else if(c2 === '#') {
+                            pos2 = scanner.skipTo('#}');
+                        } else {
+                            codes += '_html+="' + escap_str(scanner.copy(pos, pos2)) + '";';
+                        }
+                    }
+                    break;
+            }
+        }
+        
+        if(pos > pos2) {
+            codes += '_html += "' + escap_str(scanner.copy(pos2, pos + 1)) + '";';
+        }
+        
+        if(tag_stack.length > 0){
+            throw 'Syntax Error, \"' + tag_stack.join() + '\" need endtag signed.';
+        }
+        codes += ' return _html;';
+        return {render:new Function('context', codes)};
     };
-    
-    surge.compile = _compiler.compile;
-    surge.get_template = _compiler.get;
 })(this);
