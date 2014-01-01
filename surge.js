@@ -4,7 +4,7 @@
 (function(global) {
     var surge = global.surge = { };
     
-    surge.version = '0.2.2 Alpha';
+    surge.version = '0.2.3 Alpha';
     surge.debug = true;
     var _ = surge.__builtins = {};
     
