@@ -88,7 +88,7 @@
             <p>Write a demo template in script block with <code>type="text/template"</code>:</p>
             <pre><code>&lt;script type="text/template" id="demo0"&gt;
 &lt;ul id="products"&gt;
-{% for product in context.products %}
+{% for product in products %}
 &lt;li&gt;
   &lt;h2 title="{{ product.title|title}}"&gt;{{ product.title | title | truncate:20 }}&lt;/h2&gt;
   Only {{ product.price }}
@@ -302,7 +302,7 @@ title(truncate(product.name, 20))</code></pre>
     
     <script type="text/template" id="demo0">
     <ul id="products">
-      {% for product in context.products %}
+      {% for product in products %}
         <li>
           <h2 title="{{ product.title|title}}">{{ product.title | title | truncate:20 }}</h2>
           Only {{ product.price }}
