@@ -2,8 +2,8 @@ surge.js
 ========
 **Surge.js** is a new simple, fast Javascript template engine. which syntax is very like [Liquid](http://liquidmarkup.org/) or [Django template](https://docs.djangoproject.com/en/dev/topics/templates/). [Surge.js](https://github.com/guangboo/surge.js) will parse the html template to javascript function, and the compiled function will be cached.
 
-* [Tutorial](tutorial.html)
-* [Speed test](speed.html)
+* [Tutorial](http://guangboo.github.io/surge.js/tutorial.html)
+* [Speed test](http://guangboo.github.io/surge.js/speed.html)
 
 **V8 Javascript engine test result.**
 
@@ -25,4 +25,4 @@ surge.js
 * 0.2.3 Alpha -- Add <code>with</code> tag, local variable stack for <code>for</code>,<code>with</code> tag block. (2014-01-01)
         
 ###Authors and Contributors
-Email:<a href="mailto:guangboo49@gmail.com">guangboo49@gmail.com</a> Weibo:<a href="http://weibo.com/guangboo">@广播张</a>
+Email:[guangboo49@gmail.com](mailto:guangboo49@gmail.com) Weibo:[@广播张](http://weibo.com/guangboo)
