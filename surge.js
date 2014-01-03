@@ -4,7 +4,7 @@
 (function(global) {
     var surge = global.surge = { };
     
-    surge.version = '0.2.3 Alpha';
+    surge.version = '0.2.4 Alpha';
     surge.debug = true;
     var _ = surge.__builtins = {};
     
@@ -13,7 +13,7 @@
     var regex_trim = /^\s+|\s+$/g,
         regex_for = /(\w+)\s+in\s+(.*)/,
         regex_with = /((?:\w+)\s*=\s*(?:[\w\.]+))+/g;
-        regex_number = /^[-+\.]?\d[\d\.e]*$/,
+        regex_number = /[-+\.\d]/,
         regex_const_string = /^(['"]).*\1$/;
     
     var escapeMap = {
@@ -28,9 +28,7 @@
         String.prototype.trim = function(){ return this.replace(regex_trim, ''); };
     
     function is_true(a) { return !!a && (!(a instanceof Array) || a.length > 0); }
-    function is_number(a) { return regex_number.test(a); }
-    function is_string(a) { return regex_const_string.test(a); }
-    function is_constant(a) { return is_number(a) || is_string(a); }
+    function is_constant(a) { return regex_number.test(a[0]) || regex_const_string.test(a); }
     
     surge.is_true = is_true;
     
