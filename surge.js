@@ -1,21 +1,43 @@
 // surge.js
 // 2013, Theo <guangboo49@gmail.com>, https://github.com/guangboo/surge.js
 // Licensed under the MIT license.
-(function(global) {
-    var surge = global.surge = { };
-    
+(function(factory) {
+
+  // Establish the root object, `window` (`self`) in the browser, or `global` on the server.
+  // We use `self` instead of `window` for `WebWorker` support.
+  var root = (typeof self == 'object' && self.self == self && self) ||
+            (typeof global == 'object' && global.global == global && global);
+
+  // Start with AMD.
+  if (typeof define === 'function' && define.amd) {
+    define(['exports'], function(exports) {
+      root.surge = factory(root, exports);
+    });
+
+  // Next for Node.js or CommonJS.
+  } else if (typeof exports !== 'undefined') {
+    factory(root, exports);
+
+  // Finally, as a browser global.
+  } else {
+    factory(root, {});
+  }
+
+}(function(root, surge) {
+    root.surge = surge;
+
     surge.version = '0.2.4 Alpha';
     surge.debug = true;
     var _ = surge.__builtins = {};
-    
+
     surge.register = function(name, func){ if(/^[_a-zA-Z]\w*/.test(name)) { this.__builtins[name] = func; return this; } throw '"' + name + '" is not valid filter name.'; };
-    
+
     var regex_trim = /^\s+|\s+$/g,
         regex_for = /(\w+)\s+in\s+(.*)/,
         regex_with = /((?:\w+)\s*=\s*(?:[\w\.]+))+/g;
         regex_number = /[-+\.\d]/,
         regex_const_string = /^(['"]).*\1$/;
-    
+
     var escapeMap = {
         '<' : '&lt;',
         '>' : '&gt;',
@@ -23,23 +45,23 @@
         "'" : '&quot;',
         '&' : '&amp;'
     };
-    
+
     if(!String.prototype.hasOwnProperty('trim'))
         String.prototype.trim = function(){ return this.replace(regex_trim, ''); };
-    
+
     function is_true(a) { return !!a && (!(a instanceof Array) || a.length > 0); }
     function is_constant(a) { return regex_number.test(a[0]) || regex_const_string.test(a); }
-    
+
     surge.is_true = is_true;
-    
-    surge.register('trim', function(a) { 
+
+    surge.register('trim', function(a) {
         if (typeof a === 'string')
             return a.trim();
         return a;
-    }).register('ltrim', function(a) { 
-        if (typeof a === 'string') 
-            return a.replace(/^\s+/, ''); 
-        return a; 
+    }).register('ltrim', function(a) {
+        if (typeof a === 'string')
+            return a.replace(/^\s+/, '');
+        return a;
     }).register('rtrim', function(a) {
         if(typeof a === 'string')
             return a.replace(/\s+$/, '');
@@ -80,7 +102,7 @@
                         return a;
                 }
             }
-            
+
             if(a[0].hasOwnProperty(v)) {
                 var by = function(name){
                     return function(o, p){
@@ -99,7 +121,7 @@
                         else {
                             throw ("error");
                         }
-                    }
+                    };
                 };
                 return a.sort(by(v));
             }
@@ -110,7 +132,7 @@
     }).register('escape', function(a){
         return a.replace(/[<>'"]|&(?!amp;)/g, function(m){return escapeMap[m];});
     }).register('length', function(a){
-        if(typeof a === 'string' || a instanceof Array) 
+        if(typeof a === 'string' || a instanceof Array)
             return a.length;
         return a;
     }).register('lower', function(a){
@@ -136,7 +158,7 @@
         }
         return a;
     });
-    
+
     function isWhiteSpace(str) { return !/\S/.test(str); }
 
     function Scanner(src) {
@@ -144,33 +166,33 @@
         this.position = 0;
         this.length = src.length;
     }
-    
-    Scanner.prototype.eos = function() { return this.position >= this.length; }
+
+    Scanner.prototype.eos = function() { return this.position >= this.length; };
 
     Scanner.prototype.skipWhiteSpace = function() {
         if(this.position >= this.length) return;
         var c = this.source.charAt(this.position);
-        
+
         while(this.position < this.length && isWhiteSpace(c)) {
             this.position += 1;
             c = this.source.charAt(this.position);
         }
-    }
+    };
 
-    Scanner.prototype.pop = function() { return this.source.charAt(this.position++); }
+    Scanner.prototype.pop = function() { return this.source.charAt(this.position++); };
     Scanner.prototype.back = function(count) {
-        if(arguments.length == 0) {
+        if(arguments.length === 0) {
             this.position -= 1;
         }else{
             this.position -= count;
         }
-    }
+    };
 
     Scanner.prototype.skipTo = function(to) {
         var substr = this.source.substring(this.position);
         var len = to.length,
             indx = substr.indexOf(to);
-        
+
         if(indx > -1) {
             this.position += indx + len;
             return this.position;
@@ -178,21 +200,21 @@
             this.position = this.length;
             return -1;
         }
-    }
+    };
 
     Scanner.prototype.copy = function(from, to) {
         return this.source.substring(from, to);
-    }
+    };
 
     Scanner.prototype.readWord = function(){
         var p = this.position;
         var c = this.source.charAt(this.position++);
-        
+
         while(!this.eos() && !isWhiteSpace(c))
             c = this.source.charAt(this.position++);
         return this.source.substring(p, this.position - 1);
-    }
-    
+    };
+
     var _cache = {};
     var space_map = {9:'\\t',13:'\\r',10:'\\n'};
     function escap_str(token){
@@ -213,7 +235,7 @@
         }
         return tmplt;
     };
-    
+
     surge.compile = function(source) {
         var scanner = new Scanner(source);
         scanner.skipWhiteSpace();
@@ -223,12 +245,14 @@
         codes += 'var _html = "";var _ = surge.__builtins;';
         var var_index = 1;
         var var_name;
+        var loop_var1, loop_var2;
         var tag_stack = [], var_stack = [];
-        
+        var v, token, parts, ps, i;
+
         function has_var(v) {
             return var_stack.indexOf(v) !== -1;
         }
-        
+
         function parse_filter(src) {
             var fi = src.lastIndexOf('|');
             if(fi > 0) {
@@ -249,9 +273,9 @@
                 }
             }
         }
-        
+
         pos2 = scanner.position;
-        
+
         while(!scanner.eos()){
             pos = scanner.position;
             c = scanner.pop();
@@ -269,8 +293,8 @@
                                 pos = scanner.position;
                                 pos2 = scanner.skipTo('}}');
                                 if(pos2 != -1) {
-                                    var token = scanner.copy(pos - 1, pos2 - 2).trim();
-                                    var v = parse_filter(token);
+                                    token = scanner.copy(pos - 1, pos2 - 2).trim();
+                                    v = parse_filter(token);
                                     codes += '_html+=' + v + ';';
                                 } else {
                                     throw 'Syntax Error, "}}" is required.';
@@ -281,21 +305,21 @@
                             var word = scanner.readWord();
                             scanner.skipWhiteSpace();
                             pos = scanner.position;
-                            
+
                             pos2 = scanner.skipTo('%}');
                             if(pos2 > -1) {
-                                var token = scanner.copy(pos, pos2 - 2).trim();
+                                token = scanner.copy(pos, pos2 - 2).trim();
                                 if(word == 'if' || word == 'elif'){
-                                    var parts = token.split(/\s*(and|or|\(|\))\s*/g);
+                                    parts = token.split(/\s*(and|or|\(|\))\s*/g);
                                     var cs = [];
-                                    for(var i = 0; i < parts.length; i++){
+                                    for(i = 0; i < parts.length; i++){
                                         var p = parts[i];
-                                        
+
                                         if(is_constant(p)){
                                             cs.push(p);
                                         } else if(!(/and|or|\(|\)/.test(p))){
-                                            var ps = p.split(/(==|>=|<=|<|>)/);
-                                            var v = '';
+                                            ps = p.split(/(==|>=|<=|<|>)/);
+                                            v = '';
                                             if(ps.length > 1) {
                                                 v = '(';
                                                 for(var j = 0; j < ps.length; j++){
@@ -339,11 +363,12 @@
                                 } else if(word == 'for'){
                                     tag_stack.push('for');
                                     var_name = '$var_' + (var_index++);
-                                    
+                                    loop_var1 = '$loop_var1' + (var_index);
+                                    loop_var2 = '$loop_var2' + (var_index);
                                     if(regex_for.test(token)) {
-                                        var v = parse_filter(RegExp.$2);
+                                        v = parse_filter(RegExp.$2);
                                         var stmpt = 'var ' + var_name + '=' + v + ';';
-                                        stmpt += 'for(var i=0,j=' + var_name + '.length;i<j;i++){var '+ RegExp.$1 + '='+var_name+'[i];';
+                                        stmpt += 'for(var '+loop_var1+'=0,'+loop_var2+'=' + var_name + '.length;'+loop_var1+'<'+loop_var2+';'+loop_var1+'++){var '+ RegExp.$1 + '='+var_name+'['+loop_var1+'];';
                                         var_stack.push(RegExp.$1);
                                         codes += stmpt;
                                     } else {
@@ -351,10 +376,10 @@
                                     }
                                 } else if(word == 'with'){
                                     tag_stack.push('with');
-                                    var parts = token.match(regex_with);
+                                    parts = token.match(regex_with);
                                     codes += '{';
-                                    for(var i = 0; i < parts.length; i++){
-                                        var ps = parts[i].split('=');
+                                    for(i = 0; i < parts.length; i++){
+                                        ps = parts[i].split('=');
                                         var v1 = ps[0].trim(), v2 = parse_filter(ps[1].trim());
                                         codes += 'var ' + v1 + '=' + v2 + ';';
                                         var_stack.push(v1);
@@ -370,15 +395,15 @@
                     break;
             }
         }
-        
+
         if(pos > pos2) {
             codes += '_html += "' + escap_str(scanner.copy(pos2, pos + 1)) + '";';
         }
-        
+
         if(tag_stack.length > 0){
             throw 'Syntax Error, \"' + tag_stack.join() + '\" need endtag signed.';
         }
         codes += ' return _html;';
         return {render:new Function('context', codes)};
     };
-})(this);
+}));
