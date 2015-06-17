@@ -342,8 +342,9 @@
                                     
                                     if(regex_for.test(token)) {
                                         var v = parse_filter(RegExp.$2);
-                                        var stmpt = 'var ' + var_name + '=' + v + ';';
-                                        stmpt += 'for(var i=0,j=' + var_name + '.length;i<j;i++){var '+ RegExp.$1 + '='+var_name+'[i];';
+                                         var stmpt = 'var ' + var_name + '=' + v + ';',
+                                            iIndex='i'+var_name,jIndex='j'+var_name;
+                                        stmpt += 'for(var '+iIndex+'=0,'+jIndex+'=' + var_name + '.length;'+iIndex+'<'+jIndex+';'+iIndex+'++){var '+ RegExp.$1 + '='+var_name+'['+iIndex+'];';
                                         var_stack.push(RegExp.$1);
                                         codes += stmpt;
                                     } else {
