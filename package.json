@@ -1,10 +1,13 @@
 {
-    "name"          : "surge.js",
+    "name"          : "surg",
     "description"   : "Javascript template engine",
     "homepage"      : "https://github.com/guangboo/surge.js",
     "keywords"      : ["Javascript", "template"],
     "author"        : "Theo <guangboo49@gmail.com>",
     "repository"    : {"type": "git", "url": "git://github.com/guangboo/surge.js.git"},
     "main"          : "surge.js",
-    "version"       : "0.1.0"
+    "version"       : "0.1.0",
+    "bin": {
+        "surge": "bin/surge-cli.js"
+    }
 }

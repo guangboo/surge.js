@@ -242,12 +242,14 @@
         var c, c2, c3;
         var pos, pos2;
         var codes = '';
-        codes += 'var _html = "";var _ = surge.__builtins;';
+        codes += 'var _html = "";var _ = surge.__builtins;var _dom;';
+        var bindings = {};
         var var_index = 1;
         var var_name;
         var loop_var1, loop_var2;
         var tag_stack = [], var_stack = [];
         var v, token, parts, ps, i;
+        var count = 0;
 
         function has_var(v) {
             return var_stack.indexOf(v) !== -1;
@@ -278,6 +280,7 @@
 
         while(!scanner.eos()){
             pos = scanner.position;
+            count++;
             c = scanner.pop();
             switch(c) {
                 case '{':
@@ -295,7 +298,8 @@
                                 if(pos2 != -1) {
                                     token = scanner.copy(pos - 1, pos2 - 2).trim();
                                     v = parse_filter(token);
-                                    codes += '_html+=' + v + ';';
+                                    codes += '_html+="' + escap_str('<span data-hook="var'+count+'">') + v + '</span>";';
+                                    bindings[v.toString()] = {type:'text', hook:'var'+count};
                                 } else {
                                     throw 'Syntax Error, "}}" is required.';
                                 }
@@ -404,6 +408,6 @@
             throw 'Syntax Error, \"' + tag_stack.join() + '\" need endtag signed.';
         }
         codes += ' return _html;';
-        return {render:new Function('context', codes)};
+        return {bindings:bindings,render:new Function('context', codes)};
     };
 }));
